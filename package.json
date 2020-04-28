@@ -1,0 +1,29 @@
+{
+  "name": "sociallife-backend",
+  "version": "1.0.0",
+  "description": "social life backend ",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Mostafatalaat770/SocialLife-backend.git"
+  },
+  "author": "ahmed swidan, mostafa talaat and abdelrahman el snoosy",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Mostafatalaat770/SocialLife-backend/issues"
+  },
+  "homepage": "https://github.com/Mostafatalaat770/SocialLife-backend#readme",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.17.1",
+    "sqlite3": "https://github.com/mapbox/node-sqlite3/tarball/master"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.3"
+  }
+}
