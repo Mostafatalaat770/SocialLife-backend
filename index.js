@@ -1,5 +1,6 @@
 const express = require("express");
 const sqlite3 = require("sqlite3").verbose();
+const bcrypt = require('bcrypt');
 const app = express();
 var ID = 0;
 const cors = require("cors");
@@ -24,12 +25,14 @@ app.get("/", (request, response) => {
 app.post("/", (request, response) => {
 	const body = request.body;
 	const db = new sqlite3.Database("facebook_clone.db");
+
 	db.each(
-		"select ID from user_authentication where Email = (?) and password = (?)",
+		"select password, ID from user_authentication where Email = (?)",
 		body.Email,
-		body.password,
 		(error, result) => {
-			ID = result.ID;
+			if(bcrypt.compareSync(body.password, result.password)){
+			ID = result.ID;}
+			//TODO handle wrong password
 		}
 	);
 	db.close();
@@ -43,11 +46,12 @@ app.get("/signUp", (request, response) => {
 app.post("/signUp", (request, response) => {
 	const body = request.body;
 	const db = new sqlite3.Database("facebook_clone.db");
+	const hashPass = bcrypt.hashSync(body.password, 10)
 
 	db.run(
 		"INSERT INTO user_authentication (Email,password) VALUES ((?),(?))",
 		body.Email,
-		body.password,
+		hashPass,
 		(error, result) => {
 			if (!error) {
 				db.run(
@@ -65,7 +69,7 @@ app.post("/signUp", (request, response) => {
 				db.each(
 					"select ID from user_authentication where Email = (?) and password = (?)",
 					body.Email,
-					body.password,
+					hashPass,
 					(error, result) => {
 						ID = result.ID;
 					}
