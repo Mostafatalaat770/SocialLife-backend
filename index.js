@@ -1,6 +1,6 @@
 const express = require("express");
 const sqlite3 = require("sqlite3").verbose();
-const bcrypt = require('bcrypt');
+const bcrypt = require("bcrypt");
 const app = express();
 var ID = 0;
 const cors = require("cors");
@@ -30,8 +30,9 @@ app.post("/", (request, response) => {
 		"select password, ID from user_authentication where Email = (?)",
 		body.Email,
 		(error, result) => {
-			if(bcrypt.compareSync(body.password, result.password)){
-			ID = result.ID;}
+			if (bcrypt.compareSync(body.password, result.password)) {
+				ID = result.ID;
+			}
 			//TODO handle wrong password
 		}
 	);
@@ -46,7 +47,7 @@ app.get("/signUp", (request, response) => {
 app.post("/signUp", (request, response) => {
 	const body = request.body;
 	const db = new sqlite3.Database("facebook_clone.db");
-	const hashPass = bcrypt.hashSync(body.password, 10)
+	const hashPass = bcrypt.hashSync(body.password, 10);
 
 	db.run(
 		"INSERT INTO user_authentication (Email,password) VALUES ((?),(?))",
@@ -96,8 +97,7 @@ app.get("/posts/public", (request, response) => {
 app.post("/posts/public", (request, response) => {
 	const db = new sqlite3.Database("facebook_clone.db");
 	const body = request.body;
-  const time = new Date().toISOString();
-  console.log(time);
+	const time = new Date().toISOString();
 	db.run(
 		"insert into public_post(text_content, image_content, time, posted_by) values(?, ? ,?, ?)",
 		body.text_content,
@@ -147,8 +147,8 @@ app.get("/profile", (request, response) => {
 	const db = new sqlite3.Database("facebook_clone.db");
 	db.each(
 		"select * from private_post where posted_by = ? union select * from public_post where posted_by = ? order by time desc",
-    ID,
-    ID,
+		ID,
+		ID,
 		(err, result) => {
 			console.log(result);
 		}
@@ -175,6 +175,41 @@ app.post("/profile", (request, response) => {
 	db.close();
 });
 
+app.get("/user/:id", (request, response) => {
+	const requestedID = request.params.id;
+	const db = new sqlite3.Database("facebook_clone.db");
+	db.get("select * from user_data where id = ?", requestedID, (err, user) => {
+		db.get(
+			"select userfriend_ID from friend where user_ID = ? and userfriend_ID = ? UNION select user_ID from friend where userfriend_ID = ? and user_ID = ?",
+			ID,
+			requestedID,
+			ID,
+			requestedID,
+			(err, isFriend) => {
+				db.close();
+				const requestedUserData = {
+					Fname: user.Fname,
+					Lname: user.Lname,
+					phoneNumber: user.phone_number,
+					gender: user.gender,
+					profilePicture: user.profile_picture,
+					homeTown: user.home_town,
+					maritalStatus: user.marital_status,
+				};
+				if (!isFriend) {
+					return response.status(200).json(requestedUserData);
+				}
+				return response
+					.status(202)
+					.json({
+						...requestedUserData,
+						aboutMe: user.about_me,
+						DOB: user.DOB,
+					});
+			}
+		);
+	});
+});
 
 const PORT = 3001;
 app.listen(PORT, () => {
