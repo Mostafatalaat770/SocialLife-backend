@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/Mostafatalaat770/SocialLife-backend#readme",
   "dependencies": {
+    "bcrypt": "^4.0.1",
     "cors": "^2.8.5",
     "express": "^4.17.1",
     "sqlite3": "https://github.com/mapbox/node-sqlite3/tarball/master"
