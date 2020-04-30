@@ -264,6 +264,52 @@ app.get("/user/:id", (request, response) => {
 	});
 });
 
+app.get("/user/:id/acceptFriendRequest", (request, response) => {
+	const requestedID = request.params.id;
+	const db = new sqlite3.Database("facebook_clone.db");
+  db.run("delete from friend_request where sender_ID = ? and reciever_ID  = ?", 
+  requestedID,
+  ID
+  )
+  db.run("insert into friend(user_ID,userfriend_ID) values(?,?)",
+  requestedID,
+  ID
+  )
+});
+
+app.get("/user/:id/sendFriendRequest", (request, response) => {
+	const requestedID = request.params.id;
+	const db = new sqlite3.Database("facebook_clone.db");
+  db.run("insert into friend_request(sender_ID,reciever_ID) values(?,?)",
+  ID,
+  requestedID
+  )
+});
+
+app.get("/user/:id/deleteFriendRequest", (request, response) => {
+	const requestedID = request.params.id;
+	const db = new sqlite3.Database("facebook_clone.db");
+  db.run("delete from friend_request where sender_ID = ? and reciever_ID  = ? or sender_ID = ? and reciever_ID = ?", 
+  requestedID,
+  ID,
+  ID,
+  requestedID
+  )
+});
+
+app.get("/user/:id/unfriend", (request, response) => {
+	const requestedID = request.params.id;
+	const db = new sqlite3.Database("facebook_clone.db");
+  db.run("delete from friend where user_ID = ? and userfriend_ID  = ? or user_ID = ? and userfriend_ID = ?", 
+  requestedID,
+  ID,
+  ID,
+  requestedID
+  )
+});
+
+
+
 const PORT = 3001;
 app.listen(PORT, () => {
 	console.log(`Server running on port ${PORT}`);
