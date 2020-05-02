@@ -308,6 +308,19 @@ app.get("/user/:id/unfriend", (request, response) => {
   )
 });
 
+app.get("/homePage", (request, response) => {
+  const db = new sqlite3.Database("facebook_clone.db");
+  let allPosts = {};
+  db.all("SELECT post_ID, text_content, image_content,time,posted_by FROM private_post ,(select userfriend_ID from friend where user_ID = ?  union select user_ID from friend where userfriend_ID  = ?) where posted_by = userfriend_ID  UNION SELECT * FROM public_post order by time desc", 
+  ID,
+  ID,
+  (error,result)=>
+  {
+      response.send(result);
+  }
+  )
+});
+
 
 
 const PORT = 3001;
