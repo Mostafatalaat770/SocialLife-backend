@@ -3,6 +3,7 @@ const sqlite3 = require("sqlite3").verbose();
 const bcrypt = require("bcrypt");
 const app = express();
 var ID = 0;
+const DBNAME = "facebook_clone.db"
 const cors = require("cors");
 
 app.use(cors());
@@ -24,7 +25,7 @@ app.get("/", (request, response) => {
 
 app.post("/", (request, response) => {
 	const body = request.body;
-	const db = new sqlite3.Database("facebook_clone.db");
+	const db = new sqlite3.Database(DBNAME);
 
 	db.each(
 		"select password, ID from user_authentication where Email = (?)",
@@ -54,7 +55,7 @@ app.get("/signUp", (request, response) => {
 
 app.post("/signUp", (request, response) => {
 	const body = request.body;
-	const db = new sqlite3.Database("facebook_clone.db");
+	const db = new sqlite3.Database(DBNAME);
 	const hashPass = bcrypt.hashSync(body.password, 10);
 
 	db.run(
@@ -98,7 +99,7 @@ app.post("/signUp", (request, response) => {
 });
 
 app.get("/posts/public", (request, response) => {
-	const db = new sqlite3.Database("facebook_clone.db");
+	const db = new sqlite3.Database(DBNAME);
 	db.each(
 		"select * from public_post where posted_by = ?",
 		ID,
@@ -111,7 +112,7 @@ app.get("/posts/public", (request, response) => {
 });
 
 app.post("/posts/public", (request, response) => {
-	const db = new sqlite3.Database("facebook_clone.db");
+	const db = new sqlite3.Database(DBNAME);
 	const body = request.body;
 	const time = new Date().toISOString();
 	db.run(
@@ -129,7 +130,7 @@ app.post("/posts/public", (request, response) => {
 });
 
 app.get("/posts/private", (request, response) => {
-	const db = new sqlite3.Database("facebook_clone.db");
+	const db = new sqlite3.Database(DBNAME);
 	db.each(
 		"select * from private_post where posted_by = ?",
 		ID,
@@ -142,7 +143,7 @@ app.get("/posts/private", (request, response) => {
 });
 
 app.post("/posts/private", (request, response) => {
-	const db = new sqlite3.Database("facebook_clone.db");
+	const db = new sqlite3.Database(DBNAME);
 	const body = request.body;
 	const time = new Date().toISOString;
 	db.run(
@@ -160,7 +161,7 @@ app.post("/posts/private", (request, response) => {
 });
 
 app.get("/profile", (request, response) => {
-	const db = new sqlite3.Database("facebook_clone.db");
+	const db = new sqlite3.Database(DBNAME);
 	db.each(
 		"select * from private_post where posted_by = ? union select * from public_post where posted_by = ? order by time desc",
 		ID,
@@ -174,7 +175,7 @@ app.get("/profile", (request, response) => {
 });
 
 app.post("/profile", (request, response) => {
-	const db = new sqlite3.Database("facebook_clone.db");
+	const db = new sqlite3.Database(DBNAME);
 	const body = request.body;
 	const time = new Date();
 	db.run(
@@ -192,7 +193,7 @@ app.post("/profile", (request, response) => {
 });
 
 app.post("/profile/edit", (request, response) => {
-	const db = new sqlite3.Database("facebook_clone.db");
+	const db = new sqlite3.Database(DBNAME);
 	const body = request.body;
 	db.run(
 		"update user_data set Fname = ?,Lname = ?,phone_number = ?,gender = ?,DOB = ?,profile_picture = ?,home_town = ?,marital_status = ?,about_me = ? where ID = ?",
@@ -212,7 +213,7 @@ app.post("/profile/edit", (request, response) => {
 
 app.get("/user/:id", (request, response) => {
 	const requestedID = request.params.id;
-	const db = new sqlite3.Database("facebook_clone.db");
+	const db = new sqlite3.Database(DBNAME);
 	db.get("select * from user_data where id = ?", requestedID, (err, user) => {
 		db.get(
 			"select userfriend_ID from friend where user_ID = ? and userfriend_ID = ? UNION select user_ID from friend where userfriend_ID = ? and user_ID = ?",
@@ -266,7 +267,7 @@ app.get("/user/:id", (request, response) => {
 
 app.get("/user/:id/acceptFriendRequest", (request, response) => {
 	const requestedID = request.params.id;
-	const db = new sqlite3.Database("facebook_clone.db");
+	const db = new sqlite3.Database(DBNAME);
   db.run("delete from friend_request where sender_ID = ? and reciever_ID  = ?", 
   requestedID,
   ID
@@ -279,7 +280,7 @@ app.get("/user/:id/acceptFriendRequest", (request, response) => {
 
 app.get("/user/:id/sendFriendRequest", (request, response) => {
 	const requestedID = request.params.id;
-	const db = new sqlite3.Database("facebook_clone.db");
+	const db = new sqlite3.Database(DBNAME);
   db.run("insert into friend_request(sender_ID,reciever_ID) values(?,?)",
   ID,
   requestedID
@@ -288,7 +289,7 @@ app.get("/user/:id/sendFriendRequest", (request, response) => {
 
 app.get("/user/:id/deleteFriendRequest", (request, response) => {
 	const requestedID = request.params.id;
-	const db = new sqlite3.Database("facebook_clone.db");
+	const db = new sqlite3.Database(DBNAME);
   db.run("delete from friend_request where sender_ID = ? and reciever_ID  = ? or sender_ID = ? and reciever_ID = ?", 
   requestedID,
   ID,
@@ -299,7 +300,7 @@ app.get("/user/:id/deleteFriendRequest", (request, response) => {
 
 app.get("/user/:id/unfriend", (request, response) => {
 	const requestedID = request.params.id;
-	const db = new sqlite3.Database("facebook_clone.db");
+	const db = new sqlite3.Database(DBNAME);
   db.run("delete from friend where user_ID = ? and userfriend_ID  = ? or user_ID = ? and userfriend_ID = ?", 
   requestedID,
   ID,
@@ -309,7 +310,7 @@ app.get("/user/:id/unfriend", (request, response) => {
 });
 
 app.get("/homePage", (request, response) => {
-  const db = new sqlite3.Database("facebook_clone.db");
+  const db = new sqlite3.Database(DBNAME);
   let allPosts = {};
   db.all("SELECT post_ID, text_content, image_content,time,posted_by FROM private_post ,(select userfriend_ID from friend where user_ID = ?  union select user_ID from friend where userfriend_ID  = ?) where posted_by = userfriend_ID  UNION SELECT * FROM public_post order by time desc", 
   ID,
