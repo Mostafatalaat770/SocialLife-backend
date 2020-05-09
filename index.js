@@ -23,7 +23,7 @@ app.get("/", (request, response) => {
 	console.log(ID);
 });
 
-app.post("/", (request, response) => {
+app.post("/login", (request, response) => {
 	const body = request.body;
 	const db = new sqlite3.Database(DBNAME);
 
@@ -160,7 +160,7 @@ app.post("/posts/private", (request, response) => {
 	db.close();
 });
 
-app.get("/profile", (request, response) => {
+app.get("/user/posts", (request, response) => {
 	const db = new sqlite3.Database(DBNAME);
 	db.each(
 		"select * from private_post where posted_by = ? union select * from public_post where posted_by = ? order by time desc",
@@ -175,7 +175,7 @@ app.get("/profile", (request, response) => {
 });
 
 
-app.post("/profile/edit", (request, response) => {
+app.put("/profile/edit", (request, response) => {
 	const db = new sqlite3.Database(DBNAME);
 	const body = request.body;
 	db.run(
@@ -248,7 +248,7 @@ app.get("/user/:id", (request, response) => {
 	});
 });
 
-app.get("/user/:id/acceptFriendRequest", (request, response) => {
+app.post("/user/:id/acceptFriendRequest", (request, response) => {
 	const requestedID = request.params.id;
 	const db = new sqlite3.Database(DBNAME);
   db.run("delete from friend_request where sender_ID = ? and reciever_ID  = ?", 
@@ -261,7 +261,7 @@ app.get("/user/:id/acceptFriendRequest", (request, response) => {
   )
 });
 
-app.get("/user/:id/sendFriendRequest", (request, response) => {
+app.post("/user/:id/sendFriendRequest", (request, response) => {
 	const requestedID = request.params.id;
 	const db = new sqlite3.Database(DBNAME);
   db.run("insert into friend_request(sender_ID,reciever_ID) values(?,?)",
@@ -270,7 +270,7 @@ app.get("/user/:id/sendFriendRequest", (request, response) => {
   )
 });
 
-app.get("/user/:id/deleteFriendRequest", (request, response) => {
+app.delete("/user/:id/deleteFriendRequest", (request, response) => {
 	const requestedID = request.params.id;
 	const db = new sqlite3.Database(DBNAME);
   db.run("delete from friend_request where sender_ID = ? and reciever_ID  = ? or sender_ID = ? and reciever_ID = ?", 
@@ -281,7 +281,7 @@ app.get("/user/:id/deleteFriendRequest", (request, response) => {
   )
 });
 
-app.get("/user/:id/unfriend", (request, response) => {
+app.delete("/user/:id/unfriend", (request, response) => {
 	const requestedID = request.params.id;
 	const db = new sqlite3.Database(DBNAME);
   db.run("delete from friend where user_ID = ? and userfriend_ID  = ? or user_ID = ? and userfriend_ID = ?", 
