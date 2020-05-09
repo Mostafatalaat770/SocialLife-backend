@@ -174,23 +174,6 @@ app.get("/profile", (request, response) => {
 	db.close();
 });
 
-app.post("/profile", (request, response) => {
-	const db = new sqlite3.Database(DBNAME);
-	const body = request.body;
-	const time = new Date();
-	db.run(
-		"insert into private_post(text_content, image_content, time) values(?, ? ,?, ?)",
-		body.text_content,
-		"image placeholder",
-		time,
-		ID,
-		(err, result) => {
-			console.log(result);
-		}
-	);
-
-	db.close();
-});
 
 app.post("/profile/edit", (request, response) => {
 	const db = new sqlite3.Database(DBNAME);
