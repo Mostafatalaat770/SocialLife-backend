@@ -3,7 +3,7 @@ const sqlite3 = require("sqlite3").verbose();
 const bcrypt = require("bcrypt");
 const app = express();
 var ID = 0;
-const DBNAME = "facebook_clone.db"
+const DBNAME = "facebook_clone.db";
 const cors = require("cors");
 
 app.use(cors());
@@ -18,6 +18,21 @@ const requestLogger = (request, response, next) => {
 };
 app.use(requestLogger);
 
+const isFriend = (requestedID) => {
+	const db = new sqlite3.Database(DBNAME);
+
+	db.get(
+		"select userfriend_ID from friend where user_ID = ? and userfriend_ID = ? UNION select user_ID from friend where userfriend_ID = ? and user_ID = ?",
+		ID,
+		requestedID,
+		ID,
+		requestedID,
+		(err, isFriend) => {
+			db.close();
+			return isFriend === undefined ? false : true;
+		}
+	);
+};
 app.get("/", (request, response) => {
 	response.send("<h1>Welcome to swista</h1>");
 	console.log(ID);
@@ -98,19 +113,6 @@ app.post("/signUp", (request, response) => {
 	db.close();
 });
 
-app.get("/posts/public", (request, response) => {
-	const db = new sqlite3.Database(DBNAME);
-	db.each(
-		"select * from public_post where posted_by = ?",
-		ID,
-		(err, result) => {
-			console.log(result);
-		}
-	);
-
-	db.close();
-});
-
 app.post("/posts/public", (request, response) => {
 	const db = new sqlite3.Database(DBNAME);
 	const body = request.body;
@@ -120,19 +122,6 @@ app.post("/posts/public", (request, response) => {
 		body.text_content,
 		"image placeholder",
 		time,
-		ID,
-		(err, result) => {
-			console.log(result);
-		}
-	);
-
-	db.close();
-});
-
-app.get("/posts/private", (request, response) => {
-	const db = new sqlite3.Database(DBNAME);
-	db.each(
-		"select * from private_post where posted_by = ?",
 		ID,
 		(err, result) => {
 			console.log(result);
@@ -160,21 +149,6 @@ app.post("/posts/private", (request, response) => {
 	db.close();
 });
 
-app.get("/user/posts", (request, response) => {
-	const db = new sqlite3.Database(DBNAME);
-	db.each(
-		"select * from private_post where posted_by = ? union select * from public_post where posted_by = ? order by time desc",
-		ID,
-		ID,
-		(err, result) => {
-			console.log(result);
-		}
-	);
-
-	db.close();
-});
-
-
 app.put("/profile/edit", (request, response) => {
 	const db = new sqlite3.Database(DBNAME);
 	const body = request.body;
@@ -195,7 +169,7 @@ app.put("/profile/edit", (request, response) => {
 });
 
 app.get("/user/:id", (request, response) => {
-	const requestedID = request.params.id;
+	const requestedID = Number(request.params.id);
 	const db = new sqlite3.Database(DBNAME);
 	db.get("select * from user_data where id = ?", requestedID, (err, user) => {
 		db.get(
@@ -215,7 +189,24 @@ app.get("/user/:id", (request, response) => {
 					homeTown: user.home_town,
 					maritalStatus: user.marital_status,
 				};
-				if (!isFriend) {
+				if (isFriend || requestedID === ID) {
+					db.all(
+						"select * from private_post where posted_by = ? union select * from public_post where posted_by = ? order by time desc",
+						requestedID,
+						requestedID,
+						(err, posts) => {
+							return response.status(200).json({
+								userData: {
+									...requestedUserData,
+									aboutMe: user.about_me,
+									DOB: user.DOB,
+								},
+								posts: posts,
+								friendshipState: 0,
+							});
+						}
+					);
+				} else {
 					db.get(
 						"select * from friend_request where sender_ID = ? and reciever_ID = ? or sender_ID = ? and reciever_ID = ?",
 						ID,
@@ -223,25 +214,24 @@ app.get("/user/:id", (request, response) => {
 						requestedID,
 						ID,
 						(err, result) => {
-							return response.status(200).json({
-								...requestedUserData,
-								friendshipState:
-									result === undefined
-										? 1
-										: result.sender_ID === ID
-										? 2
-										: 3,
-							});
+							db.all(
+								"select * from public_post where posted_by = ? order by time desc",
+								requestedID,
+								(err, posts) => {
+									return response.status(200).json({
+										userData: { ...requestedUserData },
+										posts: posts,
+										friendshipState:
+											result === undefined
+												? 1
+												: result.sender_ID === ID
+												? 2
+												: 3,
+									});
+								}
+							);
 						}
 					);
-				} else {
-					// if isFriend: the request attribute should be undefiend
-					return response.status(200).json({
-						...requestedUserData,
-						aboutMe: user.about_me,
-						DOB: user.DOB,
-						friendshipState: 0,
-					});
 				}
 			}
 		);
@@ -251,61 +241,64 @@ app.get("/user/:id", (request, response) => {
 app.post("/user/:id/acceptFriendRequest", (request, response) => {
 	const requestedID = request.params.id;
 	const db = new sqlite3.Database(DBNAME);
-  db.run("delete from friend_request where sender_ID = ? and reciever_ID  = ?", 
-  requestedID,
-  ID
-  )
-  db.run("insert into friend(user_ID,userfriend_ID) values(?,?)",
-  requestedID,
-  ID
-  )
+	db.run(
+		"delete from friend_request where sender_ID = ? and reciever_ID  = ?",
+		requestedID,
+		ID
+	);
+	db.run(
+		"insert into friend(user_ID,userfriend_ID) values(?,?)",
+		requestedID,
+		ID
+	);
 });
 
 app.post("/user/:id/sendFriendRequest", (request, response) => {
 	const requestedID = request.params.id;
 	const db = new sqlite3.Database(DBNAME);
-  db.run("insert into friend_request(sender_ID,reciever_ID) values(?,?)",
-  ID,
-  requestedID
-  )
+	db.run(
+		"insert into friend_request(sender_ID,reciever_ID) values(?,?)",
+		ID,
+		requestedID
+	);
 });
 
 app.delete("/user/:id/deleteFriendRequest", (request, response) => {
 	const requestedID = request.params.id;
 	const db = new sqlite3.Database(DBNAME);
-  db.run("delete from friend_request where sender_ID = ? and reciever_ID  = ? or sender_ID = ? and reciever_ID = ?", 
-  requestedID,
-  ID,
-  ID,
-  requestedID
-  )
+	db.run(
+		"delete from friend_request where sender_ID = ? and reciever_ID  = ? or sender_ID = ? and reciever_ID = ?",
+		requestedID,
+		ID,
+		ID,
+		requestedID
+	);
 });
 
 app.delete("/user/:id/unfriend", (request, response) => {
 	const requestedID = request.params.id;
 	const db = new sqlite3.Database(DBNAME);
-  db.run("delete from friend where user_ID = ? and userfriend_ID  = ? or user_ID = ? and userfriend_ID = ?", 
-  requestedID,
-  ID,
-  ID,
-  requestedID
-  )
+	db.run(
+		"delete from friend where user_ID = ? and userfriend_ID  = ? or user_ID = ? and userfriend_ID = ?",
+		requestedID,
+		ID,
+		ID,
+		requestedID
+	);
 });
 
 app.get("/homePage", (request, response) => {
-  const db = new sqlite3.Database(DBNAME);
-  let allPosts = {};
-  db.all("SELECT post_ID, text_content, image_content,time,posted_by FROM private_post ,(select userfriend_ID from friend where user_ID = ?  union select user_ID from friend where userfriend_ID  = ?) where posted_by = userfriend_ID  UNION SELECT * FROM public_post order by time desc", 
-  ID,
-  ID,
-  (error,result)=>
-  {
-      response.send(result);
-  }
-  )
+	const db = new sqlite3.Database(DBNAME);
+	let allPosts = {};
+	db.all(
+		"SELECT post_ID, text_content, image_content,time,posted_by FROM private_post ,(select userfriend_ID from friend where user_ID = ?  union select user_ID from friend where userfriend_ID  = ?) where posted_by = userfriend_ID  UNION SELECT * FROM public_post order by time desc",
+		ID,
+		ID,
+		(error, result) => {
+			response.send(result);
+		}
+	);
 });
-
-
 
 const PORT = 3001;
 app.listen(PORT, () => {
