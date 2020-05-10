@@ -18,21 +18,6 @@ const requestLogger = (request, response, next) => {
 };
 app.use(requestLogger);
 
-const isFriend = (requestedID) => {
-	const db = new sqlite3.Database(DBNAME);
-
-	db.get(
-		"select userfriend_ID from friend where user_ID = ? and userfriend_ID = ? UNION select user_ID from friend where userfriend_ID = ? and user_ID = ?",
-		ID,
-		requestedID,
-		ID,
-		requestedID,
-		(err, isFriend) => {
-			db.close();
-			return isFriend === undefined ? false : true;
-		}
-	);
-};
 app.get("/", (request, response) => {
 	response.send("<h1>Welcome to swista</h1>");
 	console.log(ID);
@@ -61,11 +46,6 @@ app.post("/login", (request, response) => {
 		}
 	);
 	db.close();
-});
-
-app.get("/signUp", (request, response) => {
-	response.send("<h1>sign up page</h1>");
-	console.log(ID);
 });
 
 app.post("/signUp", (request, response) => {
