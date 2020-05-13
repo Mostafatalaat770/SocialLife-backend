@@ -27,25 +27,29 @@ app.post("/login", (request, response) => {
 	const body = request.body;
 	const db = new sqlite3.Database(DBNAME);
 
-	db.each(
+	db.get(
 		"select password, ID from user_authentication where Email = (?)",
 		body.Email,
 		(error, result) => {
-			if (bcrypt.compareSync(body.password, result.password)) {
-				ID = result.ID;
-				db.get(
-					"select * from user_data where ID  = ?",
-					result.ID,
-					(err, res) => {
-						response.status(200);
-						response.send(res);
-					}
-				);
+			db.close();
+			if (result) {
+				if (bcrypt.compareSync(body.password, result.password)) {
+					ID = result.ID;
+					db.get(
+						"select * from user_data where ID  = ?",
+						result.ID,
+						(err, res) => {
+							response.status(200);
+							response.send(res);
+						}
+					);
+				}
+			} else {
+				response.status(401);
+				response.send({ error: "Wrong Credentials!" });
 			}
-			//TODO handle wrong password
 		}
 	);
-	db.close();
 });
 
 app.post("/signUp", (request, response) => {
