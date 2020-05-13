@@ -148,6 +148,19 @@ app.put("/profile/edit", (request, response) => {
 	db.close();
 });
 
+app.get("/user/:id/info", (request, response) => {
+	const db = new sqlite3.Database(DBNAME);
+	const requestedID = Number(request.params.id);
+
+	db.get(
+		"select Fname, Lname, profile_picture from user_data where ID = ?",
+		requestedID,
+		(err, result) => {
+			response.status(200).json(result);
+		}
+	);
+});
+
 app.get("/user/:id", (request, response) => {
 	const requestedID = Number(request.params.id);
 	const db = new sqlite3.Database(DBNAME);
