@@ -286,7 +286,6 @@ app.delete("/user/:id/unfriend", (request, response) => {
 
 app.get("/homePage", (request, response) => {
 	const db = new sqlite3.Database(DBNAME);
-	let allPosts = {};
 	db.all(
 		"SELECT post_ID, text_content, image_content,time,posted_by FROM private_post ,(select userfriend_ID from friend where user_ID = ?  union select user_ID from friend where userfriend_ID  = ?) where posted_by = userfriend_ID  UNION SELECT * FROM public_post order by time desc",
 		ID,
@@ -296,6 +295,26 @@ app.get("/homePage", (request, response) => {
 		}
 	);
 });
+
+app.get("/user/friend", (request,response)=>{
+	const db = new sqlite3.Database(DBNAME);
+	db.all("SELECT Fname , Lname , ID FROM user_data ,(select userfriend_ID from friend where user_ID = 1  union select user_ID from friend where userfriend_ID  = 1) where userfriend_ID = ID",
+	ID,
+	ID,
+	(error,friendList)=>{
+		response.send(friendList);
+	})
+})
+
+app.get("/user/friendRequest", (request,response)=>{
+	const db = new sqlite3.Database(DBNAME);
+	db.all("SELECT Fname , Lname , ID FROM user_data ,(select sender_ID from friend_request where reciever_ID = ?) where sender_ID = ID",
+	ID,
+	(error,friendList)=>{
+		response.send(friendList);
+	})
+})
+
 
 const PORT = 3001;
 app.listen(PORT, () => {
