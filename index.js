@@ -165,6 +165,25 @@ app.get("/user/:id/info", (request, response) => {
 	);
 });
 
+app.get("/user/friend", (request,response)=>{
+	const db = new sqlite3.Database(DBNAME);
+	db.all("SELECT Fname , Lname , ID FROM user_data ,(select userfriend_ID from friend where user_ID = ?  union select user_ID from friend where userfriend_ID  = ?) where userfriend_ID = ID",
+	ID,
+	ID,
+	(error,friendList)=>{
+		response.send(friendList);
+	})
+})
+
+app.get("/user/friendRequest", (request,response)=>{
+	const db = new sqlite3.Database(DBNAME);
+	db.all("SELECT Fname , Lname , ID FROM user_data ,(select sender_ID from friend_request where reciever_ID = ?) where sender_ID = ID",
+	ID,
+	(error,friendRequestList)=>{
+		response.send(friendRequestList);
+	})
+})
+
 app.get("/user/:id", (request, response) => {
 	const requestedID = Number(request.params.id);
 	const db = new sqlite3.Database(DBNAME);
@@ -298,9 +317,7 @@ app.get("/homePage", (request, response) => {
 
 app.get("/user/friend", (request,response)=>{
 	const db = new sqlite3.Database(DBNAME);
-	db.all("SELECT Fname , Lname , ID FROM user_data ,(select userfriend_ID from friend where user_ID = 1  union select user_ID from friend where userfriend_ID  = 1) where userfriend_ID = ID",
-	ID,
-	ID,
+	db.all("SELECT Fname , Lname , ID FROM user_data ,(select userfriend_ID from friend where user_ID = 4  union select user_ID from friend where userfriend_ID  = 4) where userfriend_ID = ID",
 	(error,friendList)=>{
 		response.send(friendList);
 	})
@@ -310,8 +327,8 @@ app.get("/user/friendRequest", (request,response)=>{
 	const db = new sqlite3.Database(DBNAME);
 	db.all("SELECT Fname , Lname , ID FROM user_data ,(select sender_ID from friend_request where reciever_ID = ?) where sender_ID = ID",
 	ID,
-	(error,friendList)=>{
-		response.send(friendList);
+	(error,friendRequestList)=>{
+		response.send(friendRequestList);
 	})
 })
 
