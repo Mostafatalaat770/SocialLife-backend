@@ -306,7 +306,8 @@ app.delete("/user/:id/unfriend", (request, response) => {
 app.get("/homePage", (request, response) => {
 	const db = new sqlite3.Database(DBNAME);
 	db.all(
-		"SELECT post_ID, text_content, image_content,time,posted_by FROM private_post ,(select userfriend_ID from friend where user_ID = ?  union select user_ID from friend where userfriend_ID  = ?) where posted_by = userfriend_ID  UNION SELECT * FROM public_post order by time desc",
+		"SELECT post_ID, text_content, image_content,time,posted_by FROM private_post ,(select userfriend_ID from friend where user_ID = ?  union select user_ID from friend where userfriend_ID  = ?) where posted_by = userfriend_ID  UNION SELECT * FROM public_post union select * from private_post where posted_by = ? order by time desc",
+		ID,
 		ID,
 		ID,
 		(error, result) => {
@@ -315,21 +316,54 @@ app.get("/homePage", (request, response) => {
 	);
 });
 
-app.get("/user/friend", (request,response)=>{
+app.get("/search", (request,response)=>{
+	const searchType = Number(request.body.searchType);
+	var key = request.body.key;
 	const db = new sqlite3.Database(DBNAME);
-	db.all("SELECT Fname , Lname , ID FROM user_data ,(select userfriend_ID from friend where user_ID = 4  union select user_ID from friend where userfriend_ID  = 4) where userfriend_ID = ID",
-	(error,friendList)=>{
-		response.send(friendList);
-	})
-})
-
-app.get("/user/friendRequest", (request,response)=>{
-	const db = new sqlite3.Database(DBNAME);
-	db.all("SELECT Fname , Lname , ID FROM user_data ,(select sender_ID from friend_request where reciever_ID = ?) where sender_ID = ID",
-	ID,
-	(error,friendRequestList)=>{
-		response.send(friendRequestList);
-	})
+	switch(searchType){
+		case 1:
+			db.all("select Fname, Lname, ID from user_data natural join user_authentication where Email = ?",
+			key,
+			(error,result)=>{
+				response.send(result);
+			})
+			break;
+		case 2:
+			const name = key.split(" ")
+			db.all("select Fname, Lname, ID from user_data where Fname = ? and Lname  = ?",
+			name[0],
+			name[1],
+			(error,result)=>{
+				response.send(result);
+			})
+			break;
+		case 3:
+			db.all("select Fname, Lname, ID from user_data where phone_number = ?",
+			key,
+			(error,result)=>{
+				response.send(result);
+			})
+			break;
+		case 4:
+			db.all("select Fname, Lname, ID from user_data where home_town = ?",
+			key,
+			(error,result)=>{
+				response.send(result);
+			})
+			break;
+		case 5:
+			key = `%${key}%`;
+			console.log(key);
+			db.all(`SELECT * FROM (SELECT post_ID, text_content, image_content,time,posted_by FROM private_post ,(select userfriend_ID from friend where user_ID = ?  union select user_ID from friend where userfriend_ID  = ?) where posted_by = userfriend_ID  UNION SELECT * FROM public_post union select * from private_post where posted_by = ?) WHERE text_content like ? order by time desc `,
+			ID,
+			ID,
+			ID,
+			key,
+			(error,result)=>{
+				response.send(result);
+			})
+			break;
+	}
 })
 
 
