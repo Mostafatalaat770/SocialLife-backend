@@ -1,11 +1,12 @@
 const express = require("express");
 const sqlite3 = require("sqlite3").verbose();
 const bcrypt = require("bcrypt");
+const multer = require("multer");
+const path = require("path");
 const app = express();
-var ID = 0;
+var ID = 9;
 const DBNAME = "facebook_clone.db";
 const cors = require("cors");
-
 app.use(cors());
 app.use(express.json());
 
@@ -18,10 +19,63 @@ const requestLogger = (request, response, next) => {
 };
 app.use(requestLogger);
 
+const profilePictureStorage = multer.diskStorage({
+	destination: '../sociallife_frontend/public/images/profilePictures',
+	filename: function (req, file, callback) {
+		callback(null,"profile_picture_"+ID.toString()+ path.extname(file.originalname))
+	}
+});
+
+const postPictureStorage = multer.diskStorage({
+	destination: 'images/postpics',
+	filename: function (req, file, callback) {
+		crypto.pseudoRandomBytes(16, function(err, raw) {
+			if (err) return callback(err);
+		  
+			callback(null, raw.toString('hex') + path.extname(file.originalname));
+		  });
+	}
+});
+
+const profilePictureUpload = multer ({
+	storage: profilePictureStorage
+});
+
 app.get("/", (request, response) => {
 	response.send("<h1>Welcome to swista</h1>");
 	console.log(ID);
 });
+
+app.post("/upload/profilepicture", profilePictureUpload.single("profilePicture"), (request, response) => {
+	if(!request.file){
+		console.log("No file received");
+		const db = new sqlite3.Database(DBNAME);
+		db.get("select gender from user_data where ID = ?",
+		ID,
+		(err,result)=>{
+			if(result.gender === "Male"){
+				db.run("update user_data set profile_picture = 'male.png' where ID = ?",
+				ID
+				);
+			}else{
+				db.run("update user_data set profile_picture = 'female.png' where ID = ?",
+				ID
+				);
+			}
+			db.close();
+			response.send("default image inserted");
+		})
+	}
+	else{
+		response.send(request.file);
+		const db = new sqlite3.Database(DBNAME);
+		db.run("update user_data set profile_picture = ? where ID = ?",
+		request.file.filename,
+		ID
+		);
+		db.close();
+	}
+})
 
 app.post("/login", (request, response) => {
 	const body = request.body;
@@ -95,6 +149,7 @@ app.post("/signUp", (request, response) => {
 		}
 	);
 	db.close();
+	
 });
 
 app.post("/posts/public", (request, response) => {
