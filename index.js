@@ -29,12 +29,10 @@ const profilePictureStorage = multer.diskStorage({
 const postPictureStorage = multer.diskStorage({
 	destination: '../sociallife_frontend/public/images/postPictures',
 	filename: function (req, file, callback) {
-		crypto.pseudoRandomBytes(16, function(err, raw) {
-			if (err) return callback(err);
-		  
+
 			callback(null, file.fieldname + '-' + Date.now()+ path.extname(file.originalname));
-		  });
-	}
+		  }
+	
 });
 
 const profilePictureUpload = multer ({
@@ -81,17 +79,18 @@ app.post("/upload/profilepicture", profilePictureUpload.single("profilePicture")
 	}
 })
 
-app.post("/upload/postPictues", postPictureUpload.single("postPicture"), (request, response) => {
+app.post("/upload/postPictures/:post_ID/:isPublic", postPictureUpload.single("postPicture"), (request, response) => {
 	if(!request.file){
 		console.log("No file received");
+		return response.status(200)
 	}
 	else{
 		response.send(request.file);
 		const db = new sqlite3.Database(DBNAME);
-		if(request.params.isPublic === true){
+		if(Boolean(request.params.isPublic) === true){
 		db.run("update public_post set image_content = ? where post_ID = ?",
 		request.file.filename,
-		request.params.ID
+		request.params.post_ID
 		);
 		}else{
 			db.run("update private_post set image_content = ? post_ID = ?",
@@ -101,6 +100,8 @@ app.post("/upload/postPictues", postPictureUpload.single("postPicture"), (reques
 		}
 		db.close();
 	}
+	return response.status(200)
+
 })
 
 app.post("/login", (request, response) => {
@@ -182,13 +183,12 @@ app.post("/posts/public", (request, response) => {
 	const body = request.body;
 	const time = new Date().toISOString();
 	db.run(
-		"insert into public_post(text_content, image_content, time, posted_by) values(?, ? ,?, ?)",
+		"insert into public_post(text_content, time, posted_by) values(? ,?, ?)",
 		body.text_content,
-		"image placeholder",
 		time,
 		ID,
 		(err, result) => {
-			console.log(result);
+			db.get("SELECT post_ID from public_post where time = ?", time,(err, result)=>{return response.send(result)})
 		}
 	);
 
@@ -200,13 +200,12 @@ app.post("/posts/private", (request, response) => {
 	const body = request.body;
 	const time = new Date().toISOString;
 	db.run(
-		"insert into private_post(text_content, image_content, time, posted_by) values(?, ? ,?, ?)",
+		"insert into private_post(text_content, time, posted_by) values(?, ?, ?)",
 		body.text_content,
-		"image placeholder",
 		time,
 		ID,
 		(err, result) => {
-			console.log(result);
+				db.get("SELECT post_ID from private_post where time = ?", time,(err, result)=>{return response.send(result)})
 		}
 	);
 
