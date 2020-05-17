@@ -4,7 +4,7 @@ const bcrypt = require("bcrypt");
 const multer = require("multer");
 const path = require("path");
 const app = express();
-var ID = 9;
+var ID = 0;
 const DBNAME = "facebook_clone.db";
 const cors = require("cors");
 app.use(cors());
@@ -27,18 +27,22 @@ const profilePictureStorage = multer.diskStorage({
 });
 
 const postPictureStorage = multer.diskStorage({
-	destination: 'images/postpics',
+	destination: '../sociallife_frontend/public/images/postPictures',
 	filename: function (req, file, callback) {
 		crypto.pseudoRandomBytes(16, function(err, raw) {
 			if (err) return callback(err);
 		  
-			callback(null, raw.toString('hex') + path.extname(file.originalname));
+			callback(null, file.fieldname + '-' + Date.now()+ path.extname(file.originalname));
 		  });
 	}
 });
 
 const profilePictureUpload = multer ({
 	storage: profilePictureStorage
+});
+
+const postPictureUpload = multer ({
+	storage: postPictureStorage
 });
 
 app.get("/", (request, response) => {
@@ -73,6 +77,28 @@ app.post("/upload/profilepicture", profilePictureUpload.single("profilePicture")
 		request.file.filename,
 		ID
 		);
+		db.close();
+	}
+})
+
+app.post("/upload/postPictues", postPictureUpload.single("postPicture"), (request, response) => {
+	if(!request.file){
+		console.log("No file received");
+	}
+	else{
+		response.send(request.file);
+		const db = new sqlite3.Database(DBNAME);
+		if(request.params.isPublic === true){
+		db.run("update public_post set image_content = ? where post_ID = ?",
+		request.file.filename,
+		request.params.ID
+		);
+		}else{
+			db.run("update private_post set image_content = ? post_ID = ?",
+		request.file.filename,
+		request.params.ID
+		);
+		}
 		db.close();
 	}
 })
@@ -437,6 +463,9 @@ app.get("/search/:searchType/:key", (request,response)=>{
 	
 })
 
+app.get("/logout",(request,response)=>{
+ID = 0;
+})
 
 const PORT = 3001;
 app.listen(PORT, () => {
