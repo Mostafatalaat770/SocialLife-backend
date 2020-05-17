@@ -95,8 +95,9 @@ app.post("/upload/postPictures/:post_ID/:isPublic", postPictureUpload.single("po
 		}else{
 			db.run("update private_post set image_content = ? post_ID = ?",
 		request.file.filename,
-		request.params.ID
+		request.params.post_ID
 		);
+		
 		}
 		db.close();
 	}
@@ -198,7 +199,7 @@ app.post("/posts/public", (request, response) => {
 app.post("/posts/private", (request, response) => {
 	const db = new sqlite3.Database(DBNAME);
 	const body = request.body;
-	const time = new Date().toISOString;
+	const time = new Date().toISOString();
 	db.run(
 		"insert into private_post(text_content, time, posted_by) values(?, ?, ?)",
 		body.text_content,
