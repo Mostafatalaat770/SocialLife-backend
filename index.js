@@ -384,39 +384,39 @@ app.get("/homePage", (request, response) => {
 	);
 });
 
-app.get("/search", (request,response)=>{
-	const searchType = Number(request.body.searchType);
-	var key = request.body.key;
+app.get("/search/:searchType/:key", (request,response)=>{	
+	const searchType = Number(request.params.searchType);
+	var key = request.params.key;
 	const db = new sqlite3.Database(DBNAME);
 	switch(searchType){
 		case 1:
-			db.all("select Fname, Lname, ID from user_data natural join user_authentication where Email = ?",
-			key,
-			(error,result)=>{
-				response.send(result);
-			})
-			break;
-		case 2:
-			const name = key.split(" ")
+			const name = decodeURI(key).split(" ")
 			db.all("select Fname, Lname, ID from user_data where Fname = ? and Lname  = ?",
 			name[0],
 			name[1],
 			(error,result)=>{
-				response.send(result);
+				return response.send(result);
+			})
+			break;
+		case 2:
+			db.all("select Fname, Lname, ID from user_data natural join user_authentication where Email = ?",
+			key,
+			(error,result)=>{
+				return response.send(result);
 			})
 			break;
 		case 3:
 			db.all("select Fname, Lname, ID from user_data where phone_number = ?",
 			key,
 			(error,result)=>{
-				response.send(result);
+				return response.send(result);
 			})
 			break;
 		case 4:
 			db.all("select Fname, Lname, ID from user_data where home_town = ?",
 			key,
 			(error,result)=>{
-				response.send(result);
+				return response.send(result);
 			})
 			break;
 		case 5:
@@ -428,10 +428,13 @@ app.get("/search", (request,response)=>{
 			ID,
 			key,
 			(error,result)=>{
-				response.send(result);
+				return response.send(result);
 			})
 			break;
+			default:
+				return response.status(404)
 	}
+	
 })
 
 
