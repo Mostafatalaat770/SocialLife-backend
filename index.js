@@ -87,17 +87,18 @@ app.post("/upload/postPictures/:post_ID/:isPublic", postPictureUpload.single("po
 	else{
 		response.send(request.file);
 		const db = new sqlite3.Database(DBNAME);
-		if(Boolean(request.params.isPublic) === true){
+		if(Boolean(request.params.isPublic)){
 		db.run("update public_post set image_content = ? where post_ID = ?",
 		request.file.filename,
 		request.params.post_ID
 		);
-		}else{
-			db.run("update private_post set image_content = ? post_ID = ?",
+		}
+		else{
+		db.run("update private_post set image_content = ? where post_ID = ?",
 		request.file.filename,
 		request.params.post_ID
 		);
-		
+
 		}
 		db.close();
 	}
