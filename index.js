@@ -144,13 +144,12 @@ app.post("/signUp", (request, response) => {
 		(error, result) => {
 			if (!error) {
 				db.run(
-					"INSERT INTO user_data (Fname,Lname,phone_number,gender,DOB,profile_picture,home_town,marital_status,about_me) VALUES ((?),(?),(?),(?),(?),(?),(?),(?),(?))",
+					"INSERT INTO user_data (Fname,Lname,phone_number,gender,DOB,home_town,marital_status,about_me) VALUES ((?),(?),(?),(?),(?),(?),(?),(?))",
 					body.Fname,
 					body.Lname,
 					body.phone_number,
 					body.gender,
 					body.DOB,
-					body.profile_picture,
 					body.home_town,
 					body.marital_status,
 					body.about_me
@@ -218,17 +217,23 @@ app.put("/profile/edit", (request, response) => {
 	const db = new sqlite3.Database(DBNAME);
 	const body = request.body;
 	db.run(
-		"update user_data set Fname = ?,Lname = ?,phone_number = ?,gender = ?,DOB = ?,profile_picture = ?,home_town = ?,marital_status = ?,about_me = ? where ID = ?",
+		"update user_data set Fname = ?,Lname = ?,phone_number = ?,DOB = ?,home_town = ?,marital_status = ?,about_me = ? where ID = ?",
 		body.Fname,
 		body.Lname,
 		body.phone_number,
-		body.gender,
 		body.DOB,
-		body.profile_picture,
 		body.home_town,
 		body.marital_status,
 		body.about_me,
-		ID
+		ID, (err, result) => {
+			db.get("select * from user_data where ID  = ?",
+			ID,
+			(err, res) => {
+				response.status(200);
+				response.send(res);
+			}
+		);
+		}
 	);
 	db.close();
 });
@@ -463,8 +468,9 @@ app.get("/search/:searchType/:key", (request,response)=>{
 	
 })
 
-app.get("/logout",(request,response)=>{
+app.post("/logout",(request,response)=>{
 ID = 0;
+return response.status(200)
 })
 
 const PORT = 3001;
