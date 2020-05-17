@@ -315,12 +315,16 @@ app.post("/user/:id/acceptFriendRequest", (request, response) => {
 	db.run(
 		"delete from friend_request where sender_ID = ? and reciever_ID  = ?",
 		requestedID,
-		ID
-	);
-	db.run(
-		"insert into friend(user_ID,userfriend_ID) values(?,?)",
-		requestedID,
-		ID
+		ID,(err, result) => {
+			db.run(
+				"insert into friend(user_ID,userfriend_ID) values(?,?)",
+				requestedID,
+				ID,
+				(err,result) => {
+					response.status(200).send({})
+				}
+			);
+		}
 	);
 });
 
@@ -330,7 +334,10 @@ app.post("/user/:id/sendFriendRequest", (request, response) => {
 	db.run(
 		"insert into friend_request(sender_ID,reciever_ID) values(?,?)",
 		ID,
-		requestedID
+		requestedID,
+		(err,result) => {
+			response.status(200).send({})
+		}
 	);
 });
 
@@ -342,7 +349,10 @@ app.delete("/user/:id/deleteFriendRequest", (request, response) => {
 		requestedID,
 		ID,
 		ID,
-		requestedID
+		requestedID,
+		(err,result) => {
+			response.status(200).send({})
+		}
 	);
 });
 
@@ -354,7 +364,10 @@ app.delete("/user/:id/unfriend", (request, response) => {
 		requestedID,
 		ID,
 		ID,
-		requestedID
+		requestedID,
+		(err,result) => {
+			response.status(200).send({})
+		}
 	);
 });
 
